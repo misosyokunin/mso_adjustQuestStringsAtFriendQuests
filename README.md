@@ -1,0 +1,2 @@
+# mso_adjustQuestStringsAtFriendQuests
+MSOのクエストの文言を整えるブックマークレットです。（友好イベント用）

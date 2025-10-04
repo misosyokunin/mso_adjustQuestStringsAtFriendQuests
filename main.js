@@ -186,6 +186,12 @@ const compactFuncs = [
 			return `イベントポイント${numkey}つ`;
 		}
 	},
+	function(str){
+		if(/経験/.test(str)){
+			const num = str.match(/\d+/) ?? 1;
+			return `経験${numkey}ポイント`;
+		}
+	},
 ];
 const PUSH_NORMALQUEST_FLAG = "_";
 
@@ -478,5 +484,4 @@ bk.append(SCRIPT_STYLE);
 
 
 })();
-
 

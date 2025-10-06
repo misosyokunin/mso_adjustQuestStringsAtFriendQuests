@@ -96,12 +96,9 @@ const compactFuncs = [
 		if(/宝石/.test(str)){
 			const num = str.match(/\d+/) ?? 1;
 			if(/ゲームの報酬で/.test(str)){
-/*
 				return `宝石${num}個（ゲーム報酬）`;
-*/
-				return `宝石${num}個`;
 			}
-			return `宝石${x}個`;
+			return `宝石${num}個`;
 		}
 	},
 	function(str){
@@ -183,13 +180,13 @@ const compactFuncs = [
 	function(str){
 		if(/イベントポイント/.test(str)){
 			const num = str.match(/\d+/) ?? 1;
-			return `イベントポイント${numkey}つ`;
+			return `イベントポイント${num}つ`;
 		}
 	},
 	function(str){
 		if(/経験/.test(str)){
 			const num = str.match(/\d+/) ?? 1;
-			return `経験${numkey}ポイント`;
+			return `経験${num}ポイント`;
 		}
 	},
 ];
@@ -303,6 +300,9 @@ function getQuests(){
 		const ind = pa.length + 1;
 		const detail = getAdjustQuestString(td[1].textContent);
 		const level = (() => {
+			if(td[0].querySelector("img[alt=💀]")){
+				return "L💀";
+			}
 			let rs = td[0].textContent;
 /*
 			if(rs.includes("E")){
@@ -484,4 +484,3 @@ bk.append(SCRIPT_STYLE);
 
 
 })();
-

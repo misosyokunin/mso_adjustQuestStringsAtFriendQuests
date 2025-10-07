@@ -1,392 +1,486 @@
-javascript:(() => {
+javascript:(async()=>{
+"use strict";
 
-VERSION = "1.1.0";
+/*
+┏━━━━━━━━━━━━━━━━━┓
+┃ＭＳＯ＿友好イベント用クエスト整形┃
+┗━━━━━━━━━━━━━━━━━┛
+Developer:
+	魚頭男（https://minesweeper.online/ja/player/16842796 ）
+Writing:
+	魚頭男（https://minesweeper.online/ja/player/16842796 ）
 
-if(document.getElementById("____settingDialog")){
-	alert("すでに起動済みです。");
+贈れるクエストをいちいちコピペするのは面倒…。
+というわけで、ツールを作りました。
+
+=======================================================
+このツールはMinesweeper.Online様（https://minesweeper.online/ 、以下「ＭＳＯ」）より公認を受けていない、非公認のものです。
+当プログラムは、ＭＳＯ様とは一切関係ございませんので、このプログラムに関する質問・提言等の連絡は魚頭男（https://minesweeper.online/ja/player/16842796 、以下「魚」）までお願いします。
+当プログラムについて、ＭＳＯ様に連絡することは絶対にしないでください。
+運営者様並びにユーザー様にご迷惑にならないように努めておりますが、万が一のことがありましたら即削除いたします。
+=======================================================
+*/
+
+/*
+＝＝＝＝＝＝＝＝＝【使い方】＝＝＝＝＝＝＝＝＝
+このスクリプトを実行して身を任せるだけです。
+
+すべてのクエストを最短1秒で取得します
+（環境によっては2秒以上掛かるかもしれません）。
+スクリプト実行中は、できるだけタブの遷移やブラウザをバックグラウンドにしないようにしてください。
+
+なお、他言語でも同じようなことができると思います。
+ただ、このスクリプトのままでは動きませんので、適宜変えてください（「ja」や抽出文言）。
+
+*/
+
+const JEMS = [
+	"アクアマリン",
+	"オニキス",
+	"サファイア",
+	"トパーズ",
+	"ルビー",
+	"翡翠",
+	"ダイヤモンド",
+	"アメジスト",
+	"ガーネット",
+	"エメラルド"
+];
+const ARENAS = [
+	"速度NG",
+	"速度",
+	"フラグなし",
+	"効率",
+	"高難易度",
+	"ランダム難易度",
+	"ハードコアNG",
+	"ハードコア",
+	"耐久",
+	"ナイトメア"
+];
+const MODES = [
+	"初級",
+	"中級",
+	"上級",
+/*
+	"イージー NG",
+	"ミディアム NG",
+	"ハード NG",
+	"エビル NG",
+*/
+	"イージー",
+	"ミディアム",
+	"ハード",
+	"エビル",
+	"PvP"
+];
+
+function getAdjustQuestString(text){
+	for(let i = 0; i < compactFuncs.length; i++){
+		const rs = compactFuncs[i](text);
+		if(rs){
+			return rs;
+		}
+	}
+}
+
+const compactFuncs = [
+	function(str){
+		const jem = JEMS.find((JEM) => str.includes(JEM));
+		if(jem){
+			const num = str.match(/\d+/);
+			return `${jem}${num}個`;
+		}
+	},
+	function(str){
+		if(/宝石/.test(str)){
+			const num = str.match(/\d+/) ?? 1;
+			if(/ゲームの報酬で/.test(str)){
+				return `宝石${num}個（ゲーム報酬）`;
+			}
+			return `宝石${num}個`;
+		}
+	},
+	function(str){
+		if(/アリーナチケット/.test(str)){
+			const num = str.match(/\d+/) ?? 1;
+			return `アリーナチケット${num}枚`;
+		}
+	},
+	function(str){
+		if(/アリーナコイン/.test(str)){
+			const num = str.match(/\d+/) ?? 1;
+			return `アリーナコイン${num}枚`;
+		}
+	},
+	function(str){
+		if(!/アリーナ/.test(str)){
+			return;
+		}
+		const num = str.match(/\d+/);
+		const arena = ARENAS.find((ARENA) => str.includes(ARENA));
+		if(arena){
+			return `${arena}アリーナL${num}以上`;
+		}
+		return `好きなアリーナL${num}以上`;
+	},
+	function(str){
+		if(/カスタム/.test(str)){
+			const nums = str.match(/\d+/g);
+			return `カスタム${nums[0]}x${nums[1]}/${nums[2]}`;
+		}
+	},
+	function(str){
+		const mode = MODES.find((MODE) => str.includes(MODE));
+		if(mode){
+			const num = str.match(/\d+/) ?? 1;
+			if(/ヒントなし/.test(str)){
+				return `${mode}ヒントなし${num}回`;
+			}
+			if(/秒以内/.test(str)){
+				return `${mode}${num}秒以内`;
+			}
+			if(/フラグなし/.test(str)){
+				return `${mode}フラグなし${num}回`;
+			}
+			if(/連続/.test(str)){
+				return `${mode}${num}連`;
+			}
+			const num2 = str.match(/\d+/g);
+			if(/効率/.test(str)){
+				return `${mode}効率${num2[0]}%以上${num2[1] ?? 1}回`;
+			}
+			if(/回中/.test(str)){
+				return `${mode}習熟${num2[1]}`;
+			}
+			if(/24時間/.test(str)){
+				return `${mode}${num2[1]}回（24時間以内）`;
+			}
+			return `${mode}${num}回`;
+		}
+	},
+	function(str){
+		if(/名誉ポイント/.test(str)){
+			const num = str.match(/\d+/) ?? 1;
+			return `名誉${num}ﾎﾟｲﾝﾄ`;
+		}
+	},
+	function(str){
+		if(/コイン/.test(str)){
+			const num = str.match(/\d+/) ?? 1;
+			if(/ゲームの報酬で/.test(str)){
+/*
+				return `コイン${num}枚（ゲーム報酬）`;
+*/
+				return `コイン${num}枚`;
+			}
+			return `コイン${num}枚`;
+		}
+	},
+	function(str){
+		if(/イベントポイント/.test(str)){
+			const num = str.match(/\d+/) ?? 1;
+			return `イベントポイント${num}つ`;
+		}
+	},
+	function(str){
+		if(/経験/.test(str)){
+			const num = str.match(/\d+/) ?? 1;
+			return `経験${num}ポイント`;
+		}
+	},
+];
+const PUSH_NORMALQUEST_FLAG = "_";
+
+
+/*＝＝＝＝＝＝＝＝＝＝【スクリプト実行確認】＝＝＝＝＝＝＝＝＝＝*/
+{
+	const TAR_URL = "https://minesweeper.online/ja/friend-quests";
+	const TAR_TITLE = "イベントクエスト画面";
+	if(location.href.includes(TAR_URL)){
+		
+	}else{
+		const result = window.confirm(`${TAR_TITLE}ではありません。\n${TAR_TITLE}へ飛びますか？\n（ページ遷移後に再度このスクリプトを実行してください。）`);
+		if(result){
+			location.href = TAR_URL;
+		}else{
+			alert(`${TAR_TITLE}（${TAR_URL}）を表示させてください。`);
+		}
+		return;
+	}
+}
+
+
+if(document.querySelector("#QuestsBlock > div").textContent.includes("贈れるクエスト")){
+
+}else{
+	alert("贈れるクエストがありません。");
 	return;
 }
 
-
-const Settings = [
-	{
-		text: "ニコちゃんマークの両サイドをクリックした場合に新規ゲームに遷移しないようにする",
-		id: "____disabledNewGameWhenClickSmileIconSides",
-		isHtmlStyle: false,
-		style: `
-#top_area{
-	pointer-events: none;
-}
-#top_area_face{
-	pointer-events: auto;
-}
-`,
+const Wait = {
+	waits : [],
+	num : -1,
+	add(){
+		return new Promise((resolve) =>{
+			this.num++;
+			this.waits[this.num] = resolve;
+		});
 	},
-	{
-		text: "【モバイル】サイト内でオーバースクロールを無効にする",
-		id: "____disabledOverScrollBehavior",
-		isHtmlStyle: true,
-		style: `
-{
-	overscroll-behavior: none;
-}
-`,
+	release(){
+		this.waits[this.num]();
+		this.waits[this.num] = "";
+		this.num--;
 	},
-	{
-		text: "【モバイル】友好イベントで「イベントクエスト」の欄に赤丸🔴が点いている場合、ドロワーメニューボタンに特別なアイコンを表示する",
-		id: "____showFishIconWhenEventQuestsMenuOnFriendEvent",
-		isHtmlStyle: false,
-		style: `
-body:has(.link_friend_quests .fa-circle) #header-new-icon span.header-icon-absolute > i:after {
-	content: "🐟️";
-}
-`,
+	time(sec){
+		return new Promise((resolve) =>{
+			setTimeout(function(){resolve();}, sec * 1000);
+		});
 	},
-	{
-		text: "デイリークエスト内の『変更する』ボタンを押せないようにする",
-		id: "____disabledReplaceAtDairyQuests",
-		isHtmlStyle: false,
-		style: `
-#QuestsBlock > table:nth-last-of-type(2) button[id*=replace_btn] {
-	opacity: 0.5;
-	pointer-events: none;
-}
-#QuestsBlock > table:nth-last-of-type(2) button[id*=replace_btn]:after {
-	content: "🐟️";
-}
-`,
-	},
-	{
-		text: "月間クエスト内の『変更する』ボタンを押せないようにする",
-		id: "____disabledReplaceAtMonthQuests",
-		isHtmlStyle: false,
-		style: `
-#QuestsBlock > table:nth-last-of-type(1) button[id*=replace_btn] {
-	opacity: 0.5;
-	pointer-events: none;
-}
-#QuestsBlock > table:nth-last-of-type(1) button[id*=replace_btn]:after {
-	content: "🐟️";
-}
-`,
-	},
-	{
-		text: "デイリークエスト内の『ダウングレード』ボタンを押せないようにする",
-		id: "____disabledDowngrade",
-		isHtmlStyle: false,
-		style: `
-#QuestsBlock button[id*=downgrade_btn] {
-	opacity: 0.5;
-	pointer-events: none;
-}
-#QuestsBlock button[id*=downgrade_btn]:after {
-	content: "🐟️";
-}
-`,
-	},
-	{
-		text: "自分用メモ内の「削除メッセージ」を非表示にする",
-		id: "____hiddenDeletedMessageInMyMemo",
-		isHtmlStyle: false,
-		style: `
-#ChatBlock:has(#chat_tabs > .active img[src="/img/chat/notes.svg"]) #chat_messages > div > div:has(td:nth-of-type(2) span.gray) {
-	display: none;
-}
-`,
-	},
-	{
-		text: "リプレイの操作バーを画面下部に追随させる",
-		id: "____stickyBottomReplayFooter",
-		isHtmlStyle: false,
-		style: `
-#GameBlock:has(#result_block_box) #replay_footer {
-	position: sticky;
-	bottom: 0px;
-}
-#GameBlock:has(#result_block_box) #replay_play_btn,
-#GameBlock:has(#result_block_box) #replay_pause_btn{
-	position: sticky;
-	left: 10px;
-	z-index: 100;
-}
-#GameBlock:has(#result_block_box) .replay-button-column:nth-of-type(3){
-	position: sticky;
-	left: 43px;
-	z-index: 100;
-}
-#GameBlock:has(#result_block_box) .replay-button-column:nth-of-type(4){
-	position: sticky;
-	left: 75px;
-	z-index: 100;
-}
-`,
-	},
-];
+};
 
 
-
-
-
-
-
-
-
-const Functions = [
-	{
-		text: "ページネーションでジャンプする（『_p』）",
-		function: function(){
-			const result = window.prompt("ジャンプしたいページ番号を入力してね", 1);
-			if(result){
-				_p(result);
-			}
-		},
-	},
-
-];
-
-const Scripts = [
-	{
-		text: "チャットのショートカットキーを有効にする",
-		detail: "D: 最後の自分のメッセージの削除ボタンを押す\nEnter: 削除ダイアログで「OK」を押す\nEscape: 削除ダイアログで「キャンセル」を押す",
-		script: function(){
-function deleteMyLastMessage(e){
-	if(!location.href.endsWith("/chat")){
-		return;
-	}
-	if(document.activeElement.id === "chat_new_message"){
-		return;
-	}
-	if(e.code === "KeyD"){
-		Array.from(document.querySelectorAll("#chat_messages > div:not([style*=none]) .chat-remove-icon")).at(-1).click();
-	}
-	if(e.code === "Enter"){
-		if(document.getElementById("ConfirmDialog").getAttribute("style").match("display: block")){
-			document.getElementById("ConfirmDialog_ok_btn").click();
+let Pagenation = document.querySelector("#QuestsBlock > div").nextElementSibling?.nextElementSibling;
+async function updatePageNation(callback){
+	Pagenation = document.querySelector("#QuestsBlock > div").nextElementSibling?.nextElementSibling;	/*再定義*/
+	const target = document.body;
+	const observer = new MutationObserver(async function (mutations) {
+		const tar = mutations[0].target;
+/*
+					console.log(tar);
+*/
+		if(tar.classList.contains("pagination")){
+			Wait.release();
+			Pagenation = document.querySelector("#QuestsBlock > div").nextElementSibling?.nextElementSibling;	/*再定義*/
+			observer.disconnect();
 		}
-	}
-	if(e.code === "Escape"){
-		if(document.getElementById("ConfirmDialog").getAttribute("style").match("display: block")){
-			document.getElementById("ConfirmDialog_cancel_btn").click();
-		}
-	}
+	});
+	observer.observe(target, {
+		characterData: true,	/*テキストノードの変化を監視*/
+		childList: true,	/*子ノードの変化を監視*/
+		subtree: true,	/*子孫ノードも監視対象に含める*/
+	});
+	callback();	/*ページネーション操作を行う*/
+	await Wait.add();
 }
-const tar = event.currentTarget;
-if(tar.checked){
-	window.addEventListener("keydown", deleteMyLastMessage);
+let moveNextPage = function(){
+	isLooping = false;
+	return true;
+};
+if(Pagenation?.tagName === "UL"){
+	moveNextPage = (async () => {
+		const nextButton = Pagenation.querySelector(".next");
+		if(nextButton.classList.contains("disabled")){
+			isLooping = false;
+			return;
+		}else{
+			const callback = function(){
+				nextButton.click();
+			};
+			await updatePageNation(callback);
+		}
+	});
+	if(Pagenation.querySelector(".first").classList.contains("disabled")){
+	}else{
+		const callback = function(){
+			Pagenation.querySelector(".first").click();
+		};
+		await updatePageNation(callback);
+	}
 }else{
-	window.removeEventListener("keydown", deleteMyLastMessage);
+
 }
 
-		},
-	},
-];
 
+let pa = [];
+function getQuests(){
+	const trs = document.querySelectorAll("#QuestsBlock > table:first-of-type > tbody > tr");
+	trs.forEach((tr, index) => {
+		const td = tr.querySelectorAll("td");
+		const ind = pa.length + 1;
+		const detail = getAdjustQuestString(td[1].textContent);
+		const level = (() => {
+			if(td[0].querySelector("img[alt=💀]")){
+				return "L💀";
+			}
+			let rs = td[0].textContent;
+/*
+			if(rs.includes("E")){
+			
+			}else{
+				rs += PUSH_NORMALQUEST_FLAG;
+			}
+*/
+			return rs;
+		})();
+		
+		const ta = [];
+		ta.push(ind);
+		ta.push(level);
+		ta.push(detail);
+	/*
+		ta.push(td[2].textContent);
+	*/
+		pa.push(`${ta.join("\t")}\n`);
+	});
+}
 
+let isLooping = true;
+while(isLooping){
+	getQuests();
+/*
+	console.log(pa);
+*/
+	await moveNextPage();
+/*
+	console.log(isLooping);
+*/
+};
 
-const Style = document.createElement("style");
-Style.innerHTML = `
-#____settingDialog {
+const SCRIPT_STYLE = document.createElement("style");
+SCRIPT_STYLE.innerHTML = `
+#___________bk{
 	position: fixed;
 	top: 0px;
 	left: 0px;
-	z-index: 100;
-	display: flex;
-	flex-direction: column;
-	width: 100%;
-	height: 100%;
-	padding: 10%;
-	background-color: rgba(0, 0, 0, 0.5);
-}
-#____settingDialog:not(.open){
-	display: none;
-}
-#____settingDialog main {
-	display: flex;
-	flex-direction: column;
-	height: 90%;
-	background-color: #111;
+	z-index: 999;
+	right: 0px;
+	bottom: 0px;
+	margin: auto;
 	padding: 5%;
-	overflow-y: scroll;
-}
-#____settingDialog main section{
+	height: 90%;
+	width: 90%;
 	display: flex;
 	flex-direction: column;
 }
-#____settingDialog footer {
-	height: 10%;
-	background-color: #111;
+#_________loadingtext{
+	position: absolute;
+	height: 90%;
+	width: 90%;
+	background-color: rgba(0, 0, 0, 0.5);
 	display: flex;
-	justify-content: space-around;
+	align-items: center;
+	font-size: 2em;
 }
-
-#____settingDialog main label {
-	cursor: pointer;
+.hiddenContent{
+	display: none !important;
 }
-#____settingDialog main input[type="checkbox"] {
-	transform: scale(1.5);
-	margin-right: 10px;
+#___________bk > textarea{
+	height: 80%;
+}
+#___________bk > footer{
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	grid-template-rows: repeat(2, 1fr);
+	gap: 0px;
+	height: 20%;
+	padding: 0px;
+}
+#___________bk > footer > button:nth-of-type(3){
+	grid-column: span 2 / span 2;
 }
 `;
 
-const MyStorage = new class{
-	#storagename;
-	#datas;
-	constructor(){
-		this.#storagename = "_魚頭男_S005_datas";
-/*
-		window.addEventListener("beforeunload", this.save);
-*/
-		this.load();
-	}
-	get(key){
-		return this.#datas[key];
-	}
-	set(key, value){
-		return this.#datas[key] = value;
-	}
-	has(key){
-		return !!this.#datas[key];
-	}
-	remove(key){
-		delete this.#datas[key];
-	}
-	save(){
-		const savedata = JSON.stringify(this.#datas);
-		localStorage.setItem(this.#storagename, savedata);
-	}
-	load(){
-		const loaddata = localStorage.getItem(this.#storagename);
-		if(loaddata){
-			this.#datas = JSON.parse(loaddata);
-		}else{
-			this.clear();
-		}
-	}
-	clear(){
-		this.#datas = {};
-	}
-	size(){
-		return Object.keys(this.#datas).length;
-	}
-};
-
-const Dialog = document.createElement("div");
-Dialog.id = "____settingDialog";
-document.body.append(Dialog);
+const bk = document.createElement("div");
+bk.id = "___________bk";
+document.body.append(bk);
+bk.append(SCRIPT_STYLE);
 {
-	const main = document.createElement("main");
-	Dialog.append(main);
-	{
-		{
-			const section = document.createElement("section");
-			main.append(section);
-			const h2 = document.createElement("h2");
-			h2.textContent = "切り替え";
-			section.append(h2);
-			Settings.forEach((list) => {
-				const label = document.createElement("label");
-				section.append(label);
-				const checkbox = document.createElement("input");
-				checkbox.type = "checkbox";
-				checkbox.checked = MyStorage.get(list.id) ?? false;
-				checkbox.id = list.id;
-				checkbox.addEventListener("change", () => {
-					const tar = event.currentTarget;
-					MyStorage.set(tar.id, tar.checked);
-					MyStorage.save();
-				});
-				label.append(checkbox);
-				const span = document.createElement("span");
-				span.textContent = list.text;
-				label.append(span);
-				const addStyle = list.isHtmlStyle ? `html:has(#${list.id}:checked)${list.style}` : `html:has(#${list.id}:checked){${list.style}}`;
-				Style.innerHTML += addStyle;
-			});
-		}
-/*
-		{
-			const section = document.createElement("section");
-			main.append(section);
-			const h2 = document.createElement("h2");
-			h2.textContent = "スクリプト";
-			section.append(h2);
-			Scripts.forEach((list) => {
-				const label = document.createElement("label");
-				section.append(label);
-				const checkbox = document.createElement("input");
-				checkbox.type = "checkbox";
-				checkbox.checked = MyStorage.get(list.id) ?? false;
-				checkbox.id = list.id;
-				checkbox.addEventListener("change", () => {
-					const tar = event.currentTarget;
-					MyStorage.set(tar.id, tar.checked);
-					MyStorage.save();
-					list.script();
-				});
-				checkbox.dispatchEvent(new Event("change"));
-				label.append(checkbox);
-				const span = document.createElement("span");
-				span.textContent = list.text;
-				label.append(span);
-			});
-		}
-*/
-		{
-			const section = document.createElement("section");
-			main.append(section);
-			const h2 = document.createElement("h2");
-			h2.textContent = "一時機能";
-			section.append(h2);
-			Functions.forEach((list) => {
-				const button = document.createElement("button");
-				button.type = "button";
-				button.textContent = list.text;
-				button.addEventListener("click", list.function);
-				section.append(button);
-			});
-		}
-	}
+	const loadingtext = document.createElement("p");
+	loadingtext.id = "_________loadingtext";
+	loadingtext.classList.add("hiddenContent");
+	bk.append(loadingtext);
+	const textarea = document.createElement("textarea");
+	textarea.value = pa.join("");
+	bk.append(textarea);
 	const footer = document.createElement("footer");
-	Dialog.append(footer);
+	bk.append(footer);
 	{
-		const closeButton = document.createElement("button");
-		closeButton.type = "button";
-		closeButton.textContent = "設定を閉じる";
-		closeButton.addEventListener("click", closeDialog);
-		footer.append(closeButton);
+		const button = document.createElement("button");
+		button.type = "button";
+		button.textContent = "再採番";
+		button.addEventListener("click", () => {
+			const strs = textarea.value.split("\n");
+			const newstrs = strs.map((str, index) => {
+				return str.replace(/^\d+/, `${index + 1}`);
+			});
+			textarea.value = newstrs.join("\n");
+		});
+		footer.append(button);
 	}
 	{
-		const closeButton = document.createElement("button");
-		closeButton.type = "button";
-		closeButton.textContent = "このスクリプトを終了する";
-		closeButton.addEventListener("click", endScript);
-		footer.append(closeButton);
+		const button = document.createElement("button");
+		button.type = "button";
+		button.textContent = "カスタムデータセット";
+		button.addEventListener("click", () => {
+			const arr = [...textarea.value.matchAll(/\d+x\d+\/\d+/g)];
+			if(!arr.length){
+				alert("カスタムがありません。");
+				return;
+			}
+/*
+			const size = window.prompt("カスタムのサイズをコピペしてね\n例：100x100/2183", arr[0][0]);
+*/
+			const size = arr[0][0];
+			if(size){
+				const url = `https://minesweeper.online/ja/start/${size}`;
+/*
+				window.open(url, "_blank");
+*/
+				bk.setAttribute("inert", "");
+				loadingtext.classList.remove("hiddenContent");
+				loadingtext.innerText = `${size}のカスタムデータ取得中…\nしばらくお待ち下さい。`;
+				const iframe = document.createElement("iframe");
+				iframe.setAttribute("src", url);
+				iframe.style = "height: 100%; width: 100%;";
+				document.body.append(iframe);
+				iframe.addEventListener("load", () => {
+					const target = iframe.contentWindow.document.body;
+					const observer = new MutationObserver(function(mutations) {
+						const tar = mutations[0].target;
+/*
+						console.log(tar);
+*/
+						if (tar.id === "difficulty_popover"){
+							const content = tar.dataset.content;
+							const mitudo = content.match(/(?<=爆弾の密度：<span class\=".*?">)\d+\.?\d+%/)[0];
+							const hukuzatusa = content.match(/(?<=複雑さ：.*?)\d+\s?\d+/)[0].replace(/\s/, "");
+							textarea.value = textarea.value.replace(size, `${size}☠${hukuzatusa}💣${mitudo}`);
+							loadingtext.classList.add("hiddenContent");
+							bk.removeAttribute("inert");
+							observer.disconnect();
+							iframe.remove();
+						}
+					}
+					);
+					observer.observe(target, {
+						attributes: true,
+						characterData: true,
+						childList: true,
+						subtree: true,
+					});
+				}
+				);
+			}
+		});
+		footer.append(button);
 	}
-	
+	{
+		const button = document.createElement("button");
+		button.type = "button";
+		button.textContent = "コピーしておわる";
+		button.addEventListener("click", () => {
+			textarea.select();
+			document.execCommand("copy");
+	/*
+			window.getSelection?.().removeAllRanges();
+			textarea.blur();
+	*/
+			bk.remove();
+		});
+		footer.append(button);
+	}
 }
-document.body.append(Style);
-
-const openButton = document.createElement("button");
-openButton.type = "button";
-openButton.textContent = `🐟️設定🐟️（ver:${VERSION}）`;
-openButton.addEventListener("click", openDialog);
-document.body.append(openButton);
-
-
-function openDialog(){
-	Dialog.classList.add("open");
-}
-function closeDialog(){
-	Dialog.classList.remove("open");
-}
-function endScript(){
-	Style.remove();
-	Dialog.remove();
-	openButton.remove();
-}
-
-
-
 
 
 })();

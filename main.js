@@ -167,7 +167,12 @@ const compactFuncs = [
 	},
 	function(str){
 		if(/コイン/.test(str)){
-			const num = str.match(/[\d\s]+/) ?? 1;
+			let num = str.match(/[\d\s]+/);
+			if(num){
+				num = num[0];
+			}else{
+				num = "1";
+			}
 			if(/ゲームの報酬で/.test(str)){
 /*
 				return `コイン${num}枚（ゲーム報酬）`;
@@ -185,7 +190,12 @@ const compactFuncs = [
 	},
 	function(str){
 		if(/経験/.test(str)){
-			const num = str.match(/[\d\s]+/) ?? 1;
+			let num = str.match(/[\d\s]+/);
+			if(num){
+				num = num[0];
+			}else{
+				num = "1";
+			}
 			return `経験${num.replace(/\s/g, "")}ポイント`;
 		}
 	},

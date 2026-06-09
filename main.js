@@ -34,7 +34,7 @@ Writing:
 
 */
 
-const JEMS = [
+const GEMS = [
 	"アクアマリン",
 	"オニキス",
 	"サファイア",
@@ -59,21 +59,46 @@ const ARENAS = [
 	"ナイトメア"
 ];
 const MODES = [
-	"初級",
-	"中級",
-	"上級",
+	"PvP",
+	"イージー",
+	"ミディアム",
+	"ハード",
+	"エビル",
 /*
 	"イージー NG",
 	"ミディアム NG",
 	"ハード NG",
 	"エビル NG",
 */
-	"イージー",
-	"ミディアム",
-	"ハード",
-	"エビル",
-	"PvP"
+	"初級",
+	"中級",
+	"上級",
 ];
+
+const EASY_SORT_KINDS = (() => {
+	const te = [];
+	te.push("カスタム");
+	te.push(...MODES);
+	te.push("経験");
+	te.push("コイン");
+	te.push("宝石");
+	te.push(...GEMS);
+	te.push("アリーナコイン");
+	te.push(...ARENAS.map((arena) => `アリーナ：${arena}`));
+	
+	return te;
+})();
+
+const EASY_SORT_SUBS = [
+	"ヒントなし",
+	"連",
+	"効率",
+	"フラグなし",
+];
+const Easy_sort_subs = [];
+Easy_sort_subs.push(`(?!.*?(${EASY_SORT_SUBS.join("|")}))`);
+Easy_sort_subs.push(...EASY_SORT_SUBS.map((sub) => `.*?${sub}`));
+
 
 function getAdjustQuestString(text){
 	for(let i = 0; i < compactFuncs.length; i++){
@@ -86,7 +111,7 @@ function getAdjustQuestString(text){
 
 const compactFuncs = [
 	function(str){
-		const jem = JEMS.find((JEM) => str.includes(JEM));
+		const jem = GEMS.find((JEM) => str.includes(JEM));
 		if(jem){
 			const num = str.match(/\d+/);
 			return `${jem}${num}個`;
@@ -120,7 +145,7 @@ const compactFuncs = [
 		const num = str.match(/\d+/);
 		const arena = ARENAS.find((ARENA) => str.includes(ARENA));
 		if(arena){
-			return `${arena}アリーナL${num}以上`;
+			return `アリーナ：${arena}L${num}以上`;
 		}
 		return `好きなアリーナL${num}以上`;
 	},
@@ -202,6 +227,43 @@ const compactFuncs = [
 ];
 const PUSH_NORMALQUEST_FLAG = "_";
 
+function easy_sort(text){
+	const te = text.split("\n").map((str) => str.replace(/^\d+\t/, ""));
+	
+	const rea = [];
+	const Eject = /L.*?E\t/;	/*E有り無し判定*/
+	
+	function poo(boo){
+		const ta = te.filter((text) => {
+			return Eject.test(text) === boo;
+		});
+		EASY_SORT_KINDS.forEach((kind) => {
+			Easy_sort_subs.forEach((sub) => {
+				const sre = `\t${kind}${sub}`;
+				const te = [];
+				for(let i = ta.length - 1; i >= 0; i--){
+					if(ta[i].match(sre)){
+						te.push(ta[i]);
+						ta.splice(i, 1);
+					}
+				}
+				if(te.length){
+					rea.push(...te.sort());
+				}
+			});
+		});
+	}
+	poo(false);	/*E無し*/
+	poo(true);	/*E有り*/
+
+	rea.forEach((str, index) => {
+		rea[index] = `${index + 1}\t${str}`;
+	});
+/*
+	console.log(rea);
+*/
+	return rea.join("\n");
+}
 
 /*＝＝＝＝＝＝＝＝＝＝【スクリプト実行確認】＝＝＝＝＝＝＝＝＝＝*/
 {
@@ -381,12 +443,12 @@ SCRIPT_STYLE.innerHTML = `
 #___________bk > footer{
 	display: grid;
 	grid-template-columns: repeat(2, 1fr);
-	grid-template-rows: repeat(2, 1fr);
+	grid-template-rows: repeat(3, 1fr);
 	gap: 0px;
-	height: 20%;
+	height: 30%;
 	padding: 0px;
 }
-#___________bk > footer > button:nth-of-type(3){
+#___________bk > footer > button:nth-of-type(5){
 	grid-column: span 2 / span 2;
 }
 `;
@@ -408,7 +470,7 @@ bk.append(SCRIPT_STYLE);
 	{
 		const button = document.createElement("button");
 		button.type = "button";
-		button.textContent = "再採番";
+		button.textContent = "再採番🔢";
 		button.addEventListener("click", () => {
 			const strs = textarea.value.split("\n");
 			const newstrs = strs.map((str, index) => {
@@ -421,7 +483,7 @@ bk.append(SCRIPT_STYLE);
 	{
 		const button = document.createElement("button");
 		button.type = "button";
-		button.textContent = "カスタムデータセット";
+		button.textContent = "カスタムデータセット☠💣️";
 		button.addEventListener("click", () => {
 			const arr = [...textarea.value.matchAll(/\d+x\d+\/\d+/g)];
 			if(!arr.length){
@@ -473,6 +535,22 @@ bk.append(SCRIPT_STYLE);
 				);
 			}
 		});
+		footer.append(button);
+	}
+	{
+		const button = document.createElement("button");
+		button.type = "button";
+		button.textContent = "簡易ソート🔤";
+		button.addEventListener("click", () => {
+			textarea.value = easy_sort(textarea.value);
+		});
+		footer.append(button);
+	}
+	{
+		/*dami-*/
+		const button = document.createElement("button");
+		button.type = "button";	
+		button.textContent = "";
 		footer.append(button);
 	}
 	{

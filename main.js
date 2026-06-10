@@ -59,7 +59,6 @@ const ARENAS = [
 	"ナイトメア"
 ];
 const MODES = [
-	"PvP",
 	"イージー",
 	"ミディアム",
 	"ハード",
@@ -78,6 +77,7 @@ const MODES = [
 const EASY_SORT_KINDS = (() => {
 	const te = [];
 	te.push("カスタム");
+	te.push("PvP");
 	te.push(...MODES);
 	te.push("経験");
 	te.push("コイン");
@@ -153,6 +153,12 @@ const compactFuncs = [
 		if(/カスタム/.test(str)){
 			const nums = str.match(/\d+/g);
 			return `カスタム${nums[0]}x${nums[1]}/${nums[2]}`;
+		}
+	},
+	function(str){
+		if(/PvP/.test(str)){
+			const num = str.match(/\d+/) ?? 1;
+			return `PvP${num}戦`;
 		}
 	},
 	function(str){
@@ -265,6 +271,62 @@ function easy_sort(text){
 	return rea.join("\n");
 }
 
+function transEN(text){
+	const REPLACES = [
+		["カスタム", "custom"],
+		["アリーナコイン", "ac"],
+		["コイン", "mc"],
+		["経験", "xp"],
+		["宝石", "gem"],
+		["アクアマリン", "aquamarine"],
+		["オニキス", "onyx"],
+		["サファイア", "sapphire"],
+		["トパーズ", "topaz"],
+		["ルビー", "ruby"],
+		["翡翠", "jade"],
+		["ダイヤモンド", "diamond"],
+		["アメジスト", "amethyst"],
+		["ガーネット", "garnet"],
+		["エメラルド", "emerald"],
+		["アリーナ：", "Arena:"],
+		["速度NG", "SpeedNG"],
+		["速度", "Speed"],
+		["フラグなし", "NF"],
+		["効率", "Eff"],
+		["高難易度", "HighDiff"],
+		["ランダム難易度", "RandomDiff"],
+		["ハードコアNG", "HardCoreNG"],
+		["ハードコア", "HardCore"],
+		["耐久", "Endurance"],
+		["ナイトメア", "Nightmare"],
+		["PvP", "PvP"],
+		["イージー", "easy"],
+		["ミディアム", "medium"],
+		["ハード", "hard"],
+		["エビル", "Evil"],
+		["初級", "beg"],
+		["中級", "int"],
+		["上級", "exp"],
+		["ヒントなし", "NoHint"],
+		["連", "ws"],
+		["効率", "eff"],
+		["フラグなし", "NF"],
+		["以上", ""],
+		["枚", ""],
+		["個", ""],
+		["ポイント", ""],
+		["戦", "battles"],
+		["回", "wins"],
+	];
+	let rte = text;
+	REPLACES.forEach(([re, pa]) => {
+		const rexp = RegExp(re, "g");
+		rte = rte.replaceAll(rexp, `${pa} `);	/*1マス空ける*/
+	});
+	return rte;
+}
+
+
 /*＝＝＝＝＝＝＝＝＝＝【スクリプト実行確認】＝＝＝＝＝＝＝＝＝＝*/
 {
 	const TAR_URL = "https://minesweeper.online/ja/friend-quests";
@@ -312,9 +374,9 @@ const Wait = {
 };
 
 
-let Pagenation = document.querySelector("#QuestsBlock > div").nextElementSibling?.nextElementSibling;
+let Pagenation = document.querySelector("#QuestsBlock > div").nextElementSibling?.nextElementSibling?.nextElementSibling;
 async function updatePageNation(callback){
-	Pagenation = document.querySelector("#QuestsBlock > div").nextElementSibling?.nextElementSibling;	/*再定義*/
+	Pagenation = document.querySelector("#QuestsBlock > div").nextElementSibling?.nextElementSibling?.nextElementSibling;	/*再定義*/
 	const target = document.body;
 	const observer = new MutationObserver(async function (mutations) {
 		const tar = mutations[0].target;
@@ -323,7 +385,7 @@ async function updatePageNation(callback){
 */
 		if(tar.classList.contains("pagination")){
 			Wait.release();
-			Pagenation = document.querySelector("#QuestsBlock > div").nextElementSibling?.nextElementSibling;	/*再定義*/
+			Pagenation = document.querySelector("#QuestsBlock > div").nextElementSibling?.nextElementSibling?.nextElementSibling;	/*再定義*/
 			observer.disconnect();
 		}
 	});
@@ -409,6 +471,21 @@ while(isLooping){
 */
 };
 
+
+
+/*＝＝＝＝＝＝＝＝＝＝【ユーザー操作画面】＝＝＝＝＝＝＝＝＝＝*/
+
+function changeDelayText(tar, newtext, time = 2){
+	if(!tar.defaultText){
+		tar.defaultText = tar.innerText;
+	}
+	tar.textContent = newtext;
+	setTimeout(() => {
+		tar.innerText = tar.defaultText;
+	}, time * 1000);
+}
+
+
 const SCRIPT_STYLE = document.createElement("style");
 SCRIPT_STYLE.innerHTML = `
 #___________bk{
@@ -443,12 +520,18 @@ SCRIPT_STYLE.innerHTML = `
 #___________bk > footer{
 	display: grid;
 	grid-template-columns: repeat(2, 1fr);
-	grid-template-rows: repeat(3, 1fr);
+	grid-template-rows: repeat(5, 1fr);
 	gap: 0px;
-	height: 30%;
+	height: 50%;
 	padding: 0px;
 }
-#___________bk > footer > button:nth-of-type(5){
+#___________bk > footer > button:nth-of-type(1){
+	grid-column: span 2 / span 2;
+}
+#___________bk > footer > button:nth-of-type(6){
+	grid-column: span 2 / span 2;
+}
+#___________bk > footer > button:nth-of-type(7){
 	grid-column: span 2 / span 2;
 }
 `;
@@ -470,6 +553,19 @@ bk.append(SCRIPT_STYLE);
 	{
 		const button = document.createElement("button");
 		button.type = "button";
+		button.textContent = "コピー📄";
+		button.addEventListener("click", () => {
+			textarea.select();
+			document.execCommand("copy");
+			window.getSelection?.().removeAllRanges();
+			textarea.blur();
+			changeDelayText(button, "コピーしました！😊");
+		});
+		footer.append(button);
+	}
+	{
+		const button = document.createElement("button");
+		button.type = "button";
 		button.textContent = "再採番🔢";
 		button.addEventListener("click", () => {
 			const strs = textarea.value.split("\n");
@@ -477,6 +573,7 @@ bk.append(SCRIPT_STYLE);
 				return str.replace(/^\d+/, `${index + 1}`);
 			});
 			textarea.value = newstrs.join("\n");
+			changeDelayText(button, "採番しました！😊");
 		});
 		footer.append(button);
 	}
@@ -484,55 +581,56 @@ bk.append(SCRIPT_STYLE);
 		const button = document.createElement("button");
 		button.type = "button";
 		button.textContent = "カスタムデータセット☠💣️";
-		button.addEventListener("click", () => {
+		button.addEventListener("click", async() => {
 			const arr = [...textarea.value.matchAll(/\d+x\d+\/\d+/g)];
 			if(!arr.length){
 				alert("カスタムがありません。");
 				return;
 			}
-/*
-			const size = window.prompt("カスタムのサイズをコピペしてね\n例：100x100/2183", arr[0][0]);
-*/
-			const size = arr[0][0];
-			if(size){
-				const url = `https://minesweeper.online/ja/start/${size}`;
-/*
-				window.open(url, "_blank");
-*/
-				bk.setAttribute("inert", "");
-				loadingtext.classList.remove("hiddenContent");
-				loadingtext.innerText = `${size}のカスタムデータ取得中…\nしばらくお待ち下さい。`;
-				const iframe = document.createElement("iframe");
-				iframe.setAttribute("src", url);
-				iframe.style = "height: 100%; width: 100%;";
-				document.body.append(iframe);
-				iframe.addEventListener("load", () => {
-					const target = iframe.contentWindow.document.body;
-					const observer = new MutationObserver(function(mutations) {
-						const tar = mutations[0].target;
-/*
-						console.log(tar);
-*/
-						if (tar.id === "difficulty_popover"){
-							const content = tar.dataset.content;
-							const mitudo = content.match(/(?<=爆弾の密度：<span class\=".*?">)\d+\.?\d+%/)[0];
-							const hukuzatusa = content.match(/(?<=複雑さ：.*?)\d+\s?\d+/)[0].replace(/\s/, "");
-							textarea.value = textarea.value.replace(size, `${size}☠${hukuzatusa}💣${mitudo}`);
-							loadingtext.classList.add("hiddenContent");
-							bk.removeAttribute("inert");
-							observer.disconnect();
-							iframe.remove();
+			
+			for(let i = 0; i < arr.length; i++){
+				const size = arr[i][0];
+				if(size){
+					const url = `https://minesweeper.online/ja/start/${size}`;
+					
+					bk.setAttribute("inert", "");
+					loadingtext.classList.remove("hiddenContent");
+					loadingtext.innerText = `${size}のカスタムデータ取得中…\nしばらくお待ち下さい。`;
+					const iframe = document.createElement("iframe");
+					iframe.setAttribute("src", url);
+					iframe.style = "height: 100%; width: 100%;";
+					document.body.append(iframe);
+					iframe.addEventListener("load", () => {
+						const target = iframe.contentWindow.document.body;
+						const observer = new MutationObserver(function(mutations) {
+							const tar = mutations[0].target;
+	/*
+							console.log(tar);
+	*/
+							if (tar.id === "difficulty_popover"){
+								const content = tar.dataset.content;
+								const mitudo = content.match(/(?<=爆弾の密度：<span class\=".*?">)\d+\.?\d+%/)[0];
+								const hukuzatusa = content.match(/(?<=複雑さ：.*?)\d+\s?\d+/)[0].replace(/\s/, "");
+								textarea.value = textarea.value.replace(size, `${size}☠${hukuzatusa}💣${mitudo}`);
+								loadingtext.classList.add("hiddenContent");
+								bk.removeAttribute("inert");
+								observer.disconnect();
+								iframe.remove();
+								Wait.release();
+							}
 						}
+						);
+						observer.observe(target, {
+							attributes: true,
+							characterData: true,
+							childList: true,
+							subtree: true,
+						});
 					}
 					);
-					observer.observe(target, {
-						attributes: true,
-						characterData: true,
-						childList: true,
-						subtree: true,
-					});
+					await Wait.add();
+					changeDelayText(button, "セットしました！😊");
 				}
-				);
 			}
 		});
 		footer.append(button);
@@ -543,11 +641,12 @@ bk.append(SCRIPT_STYLE);
 		button.textContent = "簡易ソート🔤";
 		button.addEventListener("click", () => {
 			textarea.value = easy_sort(textarea.value);
+			changeDelayText(button, "ソートしました！😊");
 		});
 		footer.append(button);
 	}
 	{
-		/*dami-*/
+	/*dami-*/
 		const button = document.createElement("button");
 		button.type = "button";	
 		button.textContent = "";
@@ -555,15 +654,19 @@ bk.append(SCRIPT_STYLE);
 	}
 	{
 		const button = document.createElement("button");
-		button.type = "button";
-		button.textContent = "コピーしておわる";
+		button.type = "button";	
+		button.innerText = "英語に翻訳🌐\n（先にソートしといてね　＆　日本語は事前にコピーしといてね）";
 		button.addEventListener("click", () => {
-			textarea.select();
-			document.execCommand("copy");
-	/*
-			window.getSelection?.().removeAllRanges();
-			textarea.blur();
-	*/
+			textarea.value = transEN(textarea.value);
+			changeDelayText(button, "翻訳しました！😊");
+		});
+		footer.append(button);
+	}
+	{
+		const button = document.createElement("button");
+		button.type = "button";
+		button.textContent = "おわる👋";
+		button.addEventListener("click", () => {
 			bk.remove();
 		});
 		footer.append(button);
